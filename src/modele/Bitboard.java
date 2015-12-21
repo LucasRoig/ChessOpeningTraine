@@ -1,5 +1,9 @@
 package modele;
 
+/**
+ * Implémentation d'un Bitboard
+ * @author Lucas Roig
+ */
 public class Bitboard {
 	
 	//Chaque long contient la position de chaque piece, le bit de poid faible représente la case a1 puis b1, c1...
@@ -30,6 +34,9 @@ public class Bitboard {
 		positionInitiale();
 	}
 	
+	/**
+	 * Initialise le Bitboard avec la position de départ d'une partie d'échec
+	 */
 	public void positionInitiale(){
 		pion = Long.parseUnsignedLong("71776119061282560"); //seule méthode pour écrire des unsigned en java
 		cavalier = Long.parseUnsignedLong("4755801206503243842");
@@ -52,10 +59,14 @@ public class Bitboard {
 		noir = Long.parseUnsignedLong("0");
 	}
 	
-	//Insère la pièce à la position donnée
-	public void insererPiece(Case c, Piece piece){
-		if (c != null && piece.estValide()){
-			long pow = Puissance.puissance(c.ordinal());
+	/**
+	 * Insère une pièce sur une case donnée
+	 * @param c la case où insérer la pièce
+	 * @param piece la pièce à insérer
+	 */
+	public void insererPiece(int squareIndex, Piece piece){
+		if (piece.estValide()){
+			long pow = Square.getBit(squareIndex);
 			
 			pion ^= pow;
 			cavalier ^= pow;
@@ -96,11 +107,15 @@ public class Bitboard {
 		}
 	}
 	
-	//Renvoie la piece occupant la case c
-	Piece caseOccupe(Case c){
+	/**
+	 * Retourne la pièce occupant une case donnée
+	 * @param c la case 
+	 * @return la pièce, si la case est vide la couleur et le type de la pièce sont nuls
+	 */
+	Piece caseOccupe(int squareIndex){
 		Couleur couleur = null;
 		TypePiece type = null;
-		long p = Puissance.puissance(c.ordinal());
+		long p = Square.getBit(squareIndex);
 		
 		if ((noir&p) != 0){
 			couleur = Couleur.Noir;
@@ -138,66 +153,58 @@ public class Bitboard {
 	}
 	
 	//Revoie les cases attaquées par un cavalier depuis la case c
-	long cavalierAttaqueDepuis(Case c){
-		long ord = c.ordinal();
-		long pow = Puissance.puissance(c.ordinal());
+	long cavalierAttaqueDepuis(int squareIndex){
+		long pow = Square.getBit(squareIndex);
 		//déplacement 2 haut 1 gauche
 		long hhg = 0;
-		if ((ord % 8 != 0) && !(ord >= 48)){ //vérifie que le cavalier n'est ni sur la colonne a ni sur les lignes 7 ou 8
+		if ((squareIndex % 8 != 0) && !(squareIndex >= 48)){ //vérifie que le cavalier n'est ni sur la colonne a ni sur les lignes 7 ou 8
 			hhg = pow<<15;
 		}
 		
 		//déplacement 1 haut deux gauche
 		long hgg = 0;
-		if ((ord % 8 != 0) && ((ord-1) % 8 != 0) && !(ord >= 56)){
+		if ((squareIndex % 8 != 0) && ((squareIndex-1) % 8 != 0) && !(squareIndex >= 56)){
 			hgg = pow << 6;
 		}
 		//déplacement 2 haut 1 droite
 		long hhd = 0;
-		if((((ord +1) % 8) != 0) && !(ord >= 48)){
+		if((((squareIndex +1) % 8) != 0) && !(squareIndex >= 48)){
 			hhd = pow << 17;
 		}
 		//déplacement 1 haut 2 droite
 		long hdd = 0;
-		if	((((ord+1) % 8)!= 0) && (((ord + 2) % 8) != 0) && !(ord >= 56)){
+		if	((((squareIndex+1) % 8)!= 0) && (((squareIndex + 2) % 8) != 0) && !(squareIndex >= 56)){
 			hdd = pow << 10;
 		}
 		//déplacement 1 bas 2 gauche
 		long bgg = 0;
-		if ((ord % 8!= 0) && ((ord - 1) % 8 != 0) && (ord > 7))
+		if ((squareIndex % 8!= 0) && ((squareIndex - 1) % 8 != 0) && (squareIndex > 7))
 		{
 			bgg = pow >>> 10;
 		}
 		// déplacement 2 bas 1 gauche
 		long bbg = 0;
-		if ((ord % 8 != 0) && (ord > 15)){
+		if ((squareIndex % 8 != 0) && (squareIndex > 15)){
 			bbg = pow >>> 17;
 		}
 		//déplacement 1 bas 2 droite
 		long bdd = 0;
-		if (((ord + 1) % 8 != 0) && ((ord + 2) % 8 != 0) && (ord > 7)){
+		if (((squareIndex + 1) % 8 != 0) && ((squareIndex + 2) % 8 != 0) && (squareIndex > 7)){
 			bdd = pow >>> 6;
 		}
 		//déplacement 2 bas 1 droite
 		long bbd = 0;
-		if (((ord + 1) % 8 != 0) && (ord > 15)){
+		if (((squareIndex + 1) % 8 != 0) && (squareIndex > 15)){
 			bbd = pow >>> 15;
 		}
-		/*if (c.equals(Case.h8))
-		{
-			System.out.println(Long.toBinaryString(pow));
-			System.out.println(Long.toBinaryString(bgg));
-			System.out.println(Long.toBinaryString(bbg));
-		}*/
 		return hhg|hgg|hhd|hdd|bgg|bbg|bdd|bbd;
 	}
 	
 	//Renvoie les cases attaquées par une tour depuis la case c
-	long tourAttaqueDepuis (Case c){
-		int i = c.ordinal();
-		
+	long tourAttaqueDepuis (int squareIndex){
+		int i = squareIndex;
 		//Vers le haut
-		long haut = Puissance.puissance(i); 
+		long haut = Square.getBit(squareIndex); 
 		//On ajoute la case de départ dans la liste des cases, penser à l'enlever à la fin
 		i += 8;
 		while (i < 64){
@@ -210,8 +217,8 @@ public class Bitboard {
 		}
 		
 		//Vers le bas 
-		i = c.ordinal();
-		long bas = Puissance.puissance(i);
+		i = squareIndex;
+		long bas = Square.getBit(squareIndex);
 		//On ajoute la case de départ dans la liste des cases, penser à l'enlever à la fin
 		i -= 8;
 		while (i >= 0){
@@ -223,8 +230,8 @@ public class Bitboard {
 		}
 		
 		//vers la droite
-		i = c.ordinal();
-		long droite = Puissance.puissance(i);
+		i = squareIndex;
+		long droite = Square.getBit(squareIndex);
 		//On ajoute la case de départ dans la liste des cases, penser à l'enlever à la fin
 		i += 1;
 		while ((i % 8 != 0) && i < 64){
@@ -236,8 +243,8 @@ public class Bitboard {
 		}
 		
 		//vers la gauche
-		i = c.ordinal();
-		long gauche = Puissance.puissance(i);
+		i = squareIndex;
+		long gauche = Square.getBit(squareIndex);
 		//On ajoute la case de départ dans la liste des cases, penser à l'enlever à la fin
 		i -= 1;
 		while (((i + 1) % 8 != 0) && i >= 0){
@@ -247,16 +254,15 @@ public class Bitboard {
 			}
 			i -= 1;
 		}
-		
-		return (gauche|droite|haut|bas)&(~Puissance.puissance(c.ordinal()));
+		return (gauche|droite|haut|bas)&(~Square.getBit(squareIndex));
 	}
 	
 	//renvoie les cases attaquées par un fou depuis la case c
-	long fouAttaqueDepuis(Case c){
-		int i = c.ordinal();
+	long fouAttaqueDepuis(int squareIndex){
+		int i = squareIndex;
 		
 		//Diagonale haut droite
-		long hd = Puissance.puissance(i);
+		long hd = Square.getBit(squareIndex);
 		//On ajoute la case de départ dans la liste des cases, penser à l'enlever à la fin
 		i += 9;
 		while ((i < 64) && ((i % 8) != 0)){
@@ -270,8 +276,8 @@ public class Bitboard {
 		}
 		
 		//Diagonale haut gauche
-		i = c.ordinal();
-		long hg = Puissance.puissance(i);
+		i = squareIndex;
+		long hg = Square.getBit(squareIndex);
 		i += 7;
 		while ((i < 64) && ((i + 1) % 8 != 0)) {
 			hg = hg | (hg << 7);
@@ -282,8 +288,8 @@ public class Bitboard {
 		}
 		
 		//Diagonale bas gauche
-		i = c.ordinal();
-		long bg = Puissance.puissance(i);
+		i = squareIndex;
+		long bg = Square.getBit(squareIndex);
 		i -= 9;
 		while ((i >= 0) && ((i + 1) % 8 != 0) ){
 			bg = bg | (bg >>> 9);
@@ -294,8 +300,8 @@ public class Bitboard {
 		}
 		
 		//Diagonale bas droite
-		i = c.ordinal();
-		long bd = Puissance.puissance(i);
+		i = squareIndex;
+		long bd = Square.getBit(squareIndex);
 		i -= 7;
 		while ((i >= 0) && ((i % 8 != 0))) {
 			bd = bd | (bd >>> 7);
@@ -304,18 +310,18 @@ public class Bitboard {
 			}
 			i -= 7;
 		}
-		return (hd | hg | bd | bg) & ~Puissance.puissance(c.ordinal());
+		return (hd | hg | bd | bg) & ~Square.getBit(squareIndex);
 	}
 
 	//renvoie les cases attaquées par une dame depuis la case c
-	long dameAttaqueDepuis(Case c){
-		return tourAttaqueDepuis(c) | fouAttaqueDepuis(c);
+	long dameAttaqueDepuis(int squareIndex){
+		return tourAttaqueDepuis(squareIndex) | fouAttaqueDepuis(squareIndex);
 	}
 	
 	//renvoie les cases attaquées par un roi depuis la case c
-	long roiAttaqueDepuis(Case c){
-		int i = c.ordinal();
-		long pow = Puissance.puissance(i);
+	long roiAttaqueDepuis(int squareIndex){
+		int i = squareIndex;
+		long pow = Square.getBit(squareIndex);
 		long deplacement = 0;
 		
 		//vers le haut.
@@ -353,26 +359,23 @@ public class Bitboard {
 		return deplacement;
 	}
 	
-	//Ces deux méthodes permettent l'affichage de l'échiquier en mode texte
-	// 0=case vide, 1=pion, 2=cavalier, 3=fou, 4=tour, 5=roi, 6=dame
-	// les chiffres négatifs représentent les pièces noires.
-	public void printBitboard(){
+
+	public String toString(){
 		int i = 56;
+		String str = "";
 		while ( i>= 0){
-			printPiece(caseOccupe(Case.values()[i]));
+			Piece piece = caseOccupe(i);
+			if (piece == null || !piece.estValide()) {
+				str += "0";
+			}else{
+				str += piece.toString();
+			}
 			i++;
 			if (i % 8 == 0){
 				i -= 16;
-				System.out.println("");
+				str += "\n";
 			}
 		}
-		
-	}
-	private void printPiece(Piece piece){
-		if (piece == null || !piece.estValide()){
-			System.out.print("0");
-			return;
-		}
-		System.out.print(piece.toString());
+		return str;		
 	}
 }
